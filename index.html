@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Manager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            width: 500px;
+            padding: 40px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        form input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #5cb85c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #4cae4c;
+        }
+
+        .contacts {
+            margin-top: 20px;
+        }
+
+        .contact {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: #f8f8f8;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+
+        .contact-info {
+            flex-grow: 1;
+        }
+
+        .contact-details {
+            font-size: 14px;
+            white-space: nowrap; 
+        }
+
+        .delete-btn {
+            background-color: #d9534f;
+            border: none;
+            color: white;
+            padding: 5px 10px; 
+            font-size: 12px; 
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .delete-btn:hover {
+            background-color: #c9302c;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Contact Manager</h1>
+
+    <form id="add-contact-form">
+        <input type="text" id="name" placeholder="Name" required>
+        <input type="tel" id="phone" placeholder="Phone Number" required pattern="[0-9]{10}">
+        <input type="email" id="email" placeholder="Email" required>
+        <button type="submit">Add Contact</button>
+    </form>
+
+    <div id="contacts" class="contacts">
+        
+    </div>
+</div>
+
+<script>
+    const contactsDiv = document.getElementById('contacts');
+    const form = document.getElementById('add-contact-form');
+
+    
+    async function fetchContacts() {
+        const response = await fetch('/contacts');
+        const contacts = await response.json();
+        contactsDiv.innerHTML = ''; 
+
+        
+        contacts.forEach((contact, index) => {
+            const contactDiv = document.createElement('div');
+            contactDiv.className = 'contact';
+            contactDiv.innerHTML = `
+                <div class="contact-info">
+                    <span class="contact-details">${contact.name} - ${contact.phone} - ${contact.email}</span>
+                </div>
+                <button class="delete-btn" onclick="deleteContact(${index})">Delete</button>
+            `;
+            contactsDiv.appendChild(contactDiv);
+        });
+    }
+
+    
+    async function addContact(event) {
+        event.preventDefault(); 
+
+        const name = document.getElementById('name').value;
+        const phone = document.getElementById('phone').value;
+        const email = document.getElementById('email').value;
+
+        // Validate phone number
+        if (isNaN(phone) || phone.trim() === "" || phone.length !== 10) {
+            alert("Phone number must be a valid 10-digit number!");
+            return; 
+        }
+
+        
+        await fetch('/contacts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, phone: parseInt(phone), email })
+        });
+
+        
+        form.reset();
+        fetchContacts();
+    }
+
+    
+    async function deleteContact(index) {
+        await fetch(`/contacts/${index}`, {
+            method: 'DELETE'
+        });
+        
+        fetchContacts();
+    }
+    form.addEventListener('submit', addContact);
+    fetchContacts();
+</script>
+
+</body>
+</html>
